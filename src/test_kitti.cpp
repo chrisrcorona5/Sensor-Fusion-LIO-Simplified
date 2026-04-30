@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main() {
-    std::string drive_path = "data/2011_09_26_drive_0001_sync";
+    std::string drive_path = "../data/2011_09_26_drive_0001_sync";
     try {
         KittiReader kr(drive_path);
         auto paths = kr.scanPaths();
