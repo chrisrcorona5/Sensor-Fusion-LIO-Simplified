@@ -20,7 +20,6 @@ class Preprocessor {
 
     private:
         Config cfg_;
-        // Optional literal bounds computation if needed
         // Eigen::Vector3d ComputeMinBound(
         //     const std::vector<Eigen::Vector3d>& points) const;
         // Eigen::Vector3d ComputeMaxBound(
