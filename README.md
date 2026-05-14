@@ -11,23 +11,15 @@ The core engine currently handles data ingestion and synchronization for synchro
 - **`ImuReader`**: Synchronizes OXTS inertial data (accelerometer/gyroscope) and maps high-precision timestamps.
 - **`Calibration`**: Implements the rigid body transformation ($T_{imu \to velo}$) to align inertial frames with the LiDAR center.
 - **`Preprocessor`**: Voxel downsampling using hash keys and unordered map (hash map) computing each voxel's centroid to determine the boundaries of the voxel, the deskewing process is also within this file, this is when the car turns or moves then we need to make sure the lidar is still coordinated.
+- **`Iterative Closest Point`**: Point to Plane algorithm for aligning point cloud per time stamp by its 10 nearest neighbor's normal (plane) to the previous point cloud time stamp, for understanding where positioning is between each scan for the IMU propagation 
+- **`Error-State Kalman Filter`**: Assume biases and noise aware from the IMU (high frequency) tracks the system's true state to propagate the nominal state, while the lidar (lower frequency) measurement update steps in to estimate the actual kinematic errors and sensor biases/noise using $15 \times 15$ state covariance matrices and similarly dimensioned Jacobians derived from LiDAR point-cloud registration. 
 
 ## 🛠 Project Roadmap
 The development of this repository is focused on evolving from a data reader into a full-scale LIO sensor fusion system. Here are the next steps:
 
-### 1. Scan Matching & Optimization
-- **ICP (Iterative Closest Point)**: This is the geometric alignment phase. The algorithm minimizes the distance between two point clouds by iteratively rotating and translating the source cloud until it "snaps" into the target cloud.
-- **kd-tree (via `nanoflann`)**: To make ICP fast, we need to find the "nearest neighbor" for thousands of points. A kd-tree (k-dimensional tree) partitions space into regions, allowing us to find the closest point in $O(\log n)$ time rather than checking every single point.
-
-### 2. State Estimation (The Kalman Filter)
-The **Extended Kalman Filter (EKF)** acts as the brain of the fusion:
-- **Prediction Phase**: Uses high-frequency IMU data to guess where the robot moved (Kinematics).
-- **Update Phase**: Uses the ICP result (LiDAR) to correct the IMU's drift. 
-- **Math Intuition**: Think of it as a weighted average where weights are based on "uncertainty." If the IMU is noisy, we trust the LiDAR more; if the LiDAR is in a featureless hallway, we trust the IMU's motion model more.
-
-### 3. Visualization & Python Integration
+### 1. Visualization & Python Integration
 - **Open3D LIO Visualization**: A dedicated Python bridge will stream the processed LIO trajectory.
-- **Lidar Stream Overlay**: We plan to create a dashboard showing the estimated 3D trajectory (LIO) in real-time, providing a "God's eye view" of the sensor's path.
+- **Correcting Orientation of Scan Matching**: Issues with the ICP algorithm and which way to face.
 
 ---
 
@@ -46,13 +38,13 @@ Where $R$ is a $3 \times 3$ rotation matrix and $t$ is a translation vector. In 
 ---
 
 ## 💻 Building the Project
-Ensure you have **Eigen3** installed. **No cmakelists.txt file yet!**
+Ensure you have **Eigen3** installed. ***Visualization is not working yet**
 
 ```bash
 mkdir build && cd build
 cmake ..
-make
-./test_kitti
+make -j$(nproc)
+./kitti_lio ../data/2011_09_26/2011_09_26_drive_0070_sync
 ```
 
 ```bash
